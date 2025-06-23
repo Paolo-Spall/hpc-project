@@ -44,15 +44,19 @@ if rank < remainder:
 #aggiungere (remainder//rank)*rank
 
 # number of column to add to keep into account of uneven distribution
-if rank >= remainder:
-    addition = rank
-else:
-    addition = 0
+# if rank >= remainder:
+#     addition = rank
+# else:
+#     addition = 0
 
 # initialization of portion of matrix M of ncolumns columns for each task
 # (elements' value of the whole matrix ranging from 1 to n for each row)
-M = np.array([np.arange( rank*ncolumn + addition +1, 
-                           (rank+1)*ncolumn + addition +1) 
+# M = np.array([np.arange( rank*ncolumn + addition +1, 
+#                            (rank+1)*ncolumn + addition +1) 
+#                            for i in range(n)], dtype='f8') #1./array puoi con numpy 
+
+M = np.array([np.arange( displs[rank] +1, 
+                           displs[rank] +1 + recvcounts[rank]) 
                            for i in range(n)], dtype='f8') #1./array puoi con numpy 
 
 
@@ -82,7 +86,7 @@ if rank==0:
                 np.savetxt(f, buffer[:n_print], fmt='%.6f')
                 n_print -= len(buffer[:n_print])
             # if itask == 1:
-            #     print(buffer[:5])
+            print(buffer[-10:])
 else:
     comm.Send(C, dest=0)
 

@@ -77,6 +77,7 @@ if rank==0:
     #print(repr(buffer[10000-5:10000+5]))  # Print first 10 elements of the result
     #print(len(buffer), 'elements in the result')
     #print(np.any(buffer==0)) # Print number of zeros in the result
+    print(buffer[-10: ])
 t_tot = time.time() - t0
 
 if rank == 0:
