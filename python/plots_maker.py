@@ -25,8 +25,8 @@ with open(filename, 'r') as f:
 
 for line in content:
     string = line.strip().split()
-    n, time = int(string[0]), float(string[1])
-    ntasks.append(int(n))
+    itask, time = int(string[0]), float(string[1])
+    ntasks.append(int(itask))
     times.append(float(time))
 
 # sorting by n of tasks
@@ -49,10 +49,7 @@ ax_sp.set_xlabel('Number of tasks')
 ax_sp.set_ylabel('Speedup')
 ax_sp.set_title(f'Speedup of \'{prog_name}\' - N={n}')
 ax_sp.grid(True)
-#ax_sp.sp
-fig_scal.savefig(f'speedup_plot_{name}_{language}_{n}.png')
+fig_sp.savefig(f'speedup_plot_{name}_{language}_{n}.png')
 
 plt.show()
 
-for n,t in zip(ntasks, times):
-    print(n,t)
