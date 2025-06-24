@@ -99,7 +99,7 @@ program vect_mat_mul
         ! The root process gathers the results
         ! print '(A,10(E15.7E3,1X))', 'Middle ten gathered results:', buffer(496:505)
         ! print*, 'Last five elements of the gathered vector:', buffer(n-4:n)
-        OPEN(12,FILE="ProdVectMat-Gather_f90.output",STATUS="REPLACE")
+        OPEN(12,FILE="ProdVectMat-Gather-Cycle_f90.output",STATUS="REPLACE")
         do i=1, 100
             WRITE(12,*) buffer(i)
         end do
@@ -110,7 +110,7 @@ program vect_mat_mul
 
     deltat = cpu2 - cpu1
     if (rank == 0) then
-        WRITE(times_filename, '(A,I0,A)') 'times_', n, '_ProdVectMat-Gather_f90.txt'
+        WRITE(times_filename, '(A,I0,A)') 'times_', n, '_ProdVectMat-Gather-Cycle_f90.txt'
         OPEN(13,FILE=times_filename,status='unknown', position='append')
         WRITE(13, '(I2, X, F10.6)') size, deltat
         CLOSE(13, STATUS='KEEP')
