@@ -7,27 +7,32 @@ import time
 import sys
 # Parallel vector-matrix multiplication using MPI
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
+# Initializzing Parallel part of the code
+comm = MPI.COMM_WORLD # global communicator
+rank = comm.Get_rank() # extracting task id
+size = comm.Get_size() # extracting number of processes
 
+# starting time measuring
 t0 = time.time()
 
 # Read the size of the matrix from a file
 with open('input_n.txt') as file:
-    n = int(file.read().strip())
+    n = int(file.read().strip())# removing blank characters
 
 
-# and initialize the vector V
+# and initialize the vector V, values from 1 to n
 V = np.array(np.arange(1,n+1), dtype='f8')
 
+# defining number of columns to assing to the current task (to be adjusted later)
 ncolumn = n//size
 remainder = n%size
 
-recvcounts=[]
-displs = []
+# initializing the arrays for GatherV communication
+recvcounts=[] # size of the block of each task
+displs = []   # starting index of each block
 
 disp=0
+# computing recvcounts and displs arrays
 for irank in range(size):
     displs.append(disp)
     if irank < remainder:
@@ -37,7 +42,7 @@ for irank in range(size):
     recvcounts.append(incol)
     disp += incol
 
-
+# adjusting size of each block of the matrix
 if rank < remainder:
     ncolumn += 1
 
@@ -51,10 +56,6 @@ if rank < remainder:
 
 # initialization of portion of matrix M of ncolumns columns for each task
 # (elements' value of the whole matrix ranging from 1 to n for each row)
-# M = np.array([np.arange( rank*ncolumn + addition +1, 
-#                            (rank+1)*ncolumn + addition +1) 
-#                            for i in range(n)], dtype='f8') #1./array puoi con numpy 
-
 M = np.array([np.arange( displs[rank] +1, 
                            displs[rank] +1 + recvcounts[rank]) 
                            for i in range(n)], dtype='f8') #1./array puoi con numpy 
@@ -63,39 +64,46 @@ M = np.array([np.arange( displs[rank] +1,
 # computing the multiplication on the task portion of matrix
 C = V@M
 
+## MPI communication for retrieving the resulting vector
+# using Send and Receive function
+## saving the results (first 100 elements to a file)
 
-# buffer = np.zeros(n)
-# comm.Gatherv(C, recvbuf=(buffer, np.array(recvcounts), np.array(displs), MPI.DOUBLE), root=0)
-
-
+# output filename= "<program name>_py_output.txt"
 name = sys.argv[0].split('/')[-1].split('.')[0] 
 output_file = f'{name}_py_output.txt'
 
 
 if rank==0:
     n_print = min(100, n) 
-    with open(name + '_py_output.txt', 'w') as f:
+
+    # saving elements of local C vector for task 0
+    with open(output_file, 'w') as f:
         np.savetxt(f, C[:n_print], fmt='%.6f')
         n_print -= len(C[:n_print])
-        #print(C[-10:])
+        #print(C[-10:])# prints for consistency check of the results
 
+        #receiving C from each task
         for itask in range(1, size):
             buffer = np.zeros(recvcounts[itask])
             comm.Recv(buffer, source = itask)
+
+            #saving result vect elements until 100
             if n_print > 0:
                 np.savetxt(f, buffer[:n_print], fmt='%.6f')
                 n_print -= len(buffer[:n_print])
-            # if itask == 1:
-        print(buffer[-10:])
+        # prints for consistency check of the results
+        #print(buffer[-10:])
 else:
+    # sending C for tasks = 1, ... ,size
     comm.Send(C, dest=0)
 
 
 t_tot = time.time() - t0
 
+## saving computation time to a file for computing performance metrics
 if rank == 0:
+    ## filename= "times_< matrix size >_<program name>_py.txt"
     timefile = f'times_{n}_' + name + '_py.txt' 
-    #print('Execution time saved in:',timefile)
     with open(timefile, 'a') as f:
         f.write(f'{size} {t_tot}\n')
 
