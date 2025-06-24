@@ -77,7 +77,7 @@ if rank==0:
     with open(name + '_py_output.txt', 'w') as f:
         np.savetxt(f, C[:n_print], fmt='%.6f')
         n_print -= len(C[:n_print])
-        #print(C[-5:])
+        #print(C[-10:])
 
         for itask in range(1, size):
             buffer = np.zeros(recvcounts[itask])
@@ -86,7 +86,7 @@ if rank==0:
                 np.savetxt(f, buffer[:n_print], fmt='%.6f')
                 n_print -= len(buffer[:n_print])
             # if itask == 1:
-            print(buffer[-10:])
+        print(buffer[-10:])
 else:
     comm.Send(C, dest=0)
 
