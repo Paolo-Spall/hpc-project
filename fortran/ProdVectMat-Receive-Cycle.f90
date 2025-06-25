@@ -3,7 +3,8 @@ program vect_mat_mul
     implicit none
     
     integer, parameter :: K2 = selected_real_kind(15, 30)
-    integer :: n,i,j,k,st, remainder, disp
+    integer :: n,i,j,k,st, remainder, disp, n_print, n_elements
+    ! MPI variables
     integer :: size, ierr, ecode, rank , status(MPI_STATUS_SIZE)
     real :: cpu1, cpu2, deltat
     real(KIND=K2), allocatable, dimension(:,:) :: M
@@ -82,29 +83,52 @@ program vect_mat_mul
     ! end do
 
     ! initialize resulting vector
-    allocate(C(n))
+    allocate(C(Ncolumns))
 
-    C = MATMUL(V, M)
+    !C = MATMUL(V, M)
+    do j =1, Ncolumns
+        C(j) = 0.0
+        do k=1, n
+            C(j) = C(j) + M(k,j) * V(k)
+        end do
+    end do
 
     !communication part
-    allocate(buffer(n))
-    call MPI_GATHERV(C, Ncolumns, MPI_DOUBLE_PRECISION, buffer, RECVCOUNTS, DISPLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+    
+    !call MPI_GATHERV(C, Ncolumns, MPI_DOUBLE_PRECISION, buffer, RECVCOUNTS, DISPLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
     if (rank == 0) then
-        ! The root process gathers the results
-        ! print '(A,10(E15.7E3,1X))', 'Middle ten gathered results:', buffer(496:505)
-        ! print*, 'Last five elements of the gathered vector:', buffer(n-4:n)
-        OPEN(12,FILE="ProdVectMat-Gather_f90.output",STATUS="REPLACE")
-        do i=1, min(n,100)
-            WRITE(12,*) buffer(i)
+        n_print = MIN(n, 100)
+
+        OPEN(12,FILE="ProdVectMat-Receive-Cycle_f90.output",STATUS="REPLACE")
+        do i=1, min(n_print, Ncolumns)
+            WRITE(12,*) C(i)
+            n_print = n_print -1
+        end do
+        
+        !iterating over the tasks
+        do i=1, size-1
+            n_elements = RECVCOUNTS(i+1)
+            allocate(buffer(n_elements))
+            call MPI_RECV(buffer, n_elements, MPI_DOUBLE_PRECISION, i, 10, MPI_COMM_WORLD, status, ierr)
+            !print*, buffer()
+            if (n_print > 0) then
+                do j=1, min(n_print, n_elements)
+                    WRITE(12,*) buffer(j)
+                    n_print = n_print - 1
+                end do
+            end if
+            deallocate(buffer)
         end do
         CLOSE(12, STATUS='KEEP')
+    else
+        call MPI_SEND(C, Ncolumns, MPI_DOUBLE_PRECISION, 0, 10, MPI_COMM_WORLD, ierr)
     end if
 
     CALL CPU_TIME(cpu2)
 
     deltat = cpu2 - cpu1
     if (rank == 0) then
-        WRITE(times_filename, '(A,I0,A)') 'times_', n, '_ProdVectMat-Gather_f90.txt'
+        WRITE(times_filename, '(A,I0,A)') 'times_', n, '_ProdVectMat-Receive-Cycle_f90.txt'
         OPEN(13,FILE=times_filename,status='unknown', position='append')
         WRITE(13, '(I2, X, F10.6)') size, deltat
         CLOSE(13, STATUS='KEEP')

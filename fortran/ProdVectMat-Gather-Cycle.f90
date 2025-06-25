@@ -82,7 +82,7 @@ program vect_mat_mul
     ! end do
 
     ! initialize resulting vector
-    allocate(C(n))
+    allocate(C(Ncolumns))
 
     !C = MATMUL(V, M)
     do j =1, Ncolumns
@@ -100,7 +100,7 @@ program vect_mat_mul
         ! print '(A,10(E15.7E3,1X))', 'Middle ten gathered results:', buffer(496:505)
         ! print*, 'Last five elements of the gathered vector:', buffer(n-4:n)
         OPEN(12,FILE="ProdVectMat-Gather-Cycle_f90.output",STATUS="REPLACE")
-        do i=1, 100
+        do i=1, min(n,100)
             WRITE(12,*) buffer(i)
         end do
         CLOSE(12, STATUS='KEEP')
