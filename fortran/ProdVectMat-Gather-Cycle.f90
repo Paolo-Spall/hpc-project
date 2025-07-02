@@ -6,7 +6,7 @@ program vect_mat_mul
     ! declaring indexes and integer aux variables
     integer :: n,i,j,k,st, Ncolumns, remainder, disp 
     integer :: size, ierr, ecode, rank , status(MPI_STATUS_SIZE) ! decl. mpi variables
-    real :: cpu1, cpu2, deltat
+    real(KIND=K2) :: cpu1, cpu2, deltat
     ! declaring matrix and vector variables
     real(KIND=K2), allocatable, dimension(:,:) :: M
     real(KIND=K2), allocatable, dimension(:) :: V, C, buffer
@@ -20,7 +20,7 @@ program vect_mat_mul
     call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ierr) !extracting number of processes
     
     !starting time measuring
-    CALL CPU_TIME(cpu1)
+    cpu1 = MPI_WTIME()
 
     ! Read the size of the matrix from a file
     OPEN(11,FILE="input_n.txt",STATUS="OLD",IOSTAT=st)
@@ -97,7 +97,8 @@ program vect_mat_mul
     end if
 
     ! stop time measuring
-    CALL CPU_TIME(cpu2)
+    cpu2 = MPI_WTIME()
+
 
     ! appending the time measurement in the correspondant time file
     deltat = cpu2 - cpu1
@@ -105,6 +106,7 @@ program vect_mat_mul
         WRITE(times_filename, '(A,I0,A)') 'times_', n, '_ProdVectMat-Gather-Cycle_f90.txt'
         OPEN(13,FILE=times_filename,status='unknown', position='append')
         WRITE(13, '(I2, X, F10.6)') size, deltat
+        !WRITE(13, *) size, deltat
         CLOSE(13, STATUS='KEEP')
         !print*, 'Time taken for initialization:', deltat
     end if

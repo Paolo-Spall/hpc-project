@@ -8,7 +8,7 @@ program vect_mat_mul
     integer :: n,i,j,k, Ncolumns, st, remainder, disp, n_print, n_elements
     ! decl MPI variables
     integer :: size, ierr, ecode, rank , status(MPI_STATUS_SIZE)
-    real :: cpu1, cpu2, deltat
+    real(KIND=K2) :: cpu1, cpu2, deltat
     ! declaring matrix and vector variables
     real(KIND=K2), allocatable, dimension(:,:) :: M
     real(KIND=K2), allocatable, dimension(:) :: V, C, buffer
@@ -22,7 +22,7 @@ program vect_mat_mul
     call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ierr)!extracting number of processes
     
     !starting time measuring
-    CALL CPU_TIME(cpu1)
+    cpu1 = MPI_WTIME()
 
     ! Read the size of the matrix from a file
     OPEN(11,FILE="input_n.txt",STATUS="OLD",IOSTAT=st)
@@ -30,10 +30,8 @@ program vect_mat_mul
     CLOSE(11, STATUS='KEEP')
 
     !computing number of columns that each process will handle
-    print*, 'Number of processes:', size
     Ncolumns = n / size
     remainder = mod(n, size)
-    print*, 'Number of columns per process:', Ncolumns
 
     ! Setting DISPLS and RECVCOUNTS for MPI_GATHER
     allocate(DISPLS(size)) !width of resulting vector for each process
@@ -120,7 +118,7 @@ program vect_mat_mul
     end if
 
     ! stop time measurment
-    CALL CPU_TIME(cpu2)
+    cpu2 = MPI_WTIME()
 
     ! saving computing time into correspondent times output file 
     deltat = cpu2 - cpu1
